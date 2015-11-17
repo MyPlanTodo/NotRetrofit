@@ -547,8 +547,13 @@ public final class $subclass$formalTypes extends $origClass$actualTypes {
 
                 RetrofitError retrofitError = null;
                 if (e instanceof IOException) {
+                    System.out.println("retrofit: OnSubscribeResponse.onError(): is IOException: " + e);
                     retrofitError = retrofit.RetrofitError.networkError(_finalUrl, (IOException) e);
+                } else if (e instanceof RequestException) {
+                    System.out.println("retrofit: OnSubscribeResponse.onError(): is RequestException: " + e);
+                    retrofitError = retrofit.RetrofitError.networkError(_finalUrl, (IOException) ((RequestException) e).getCause());
                 } else {
+                    System.out.println("retrofit: OnSubscribeResponse.onError(): not IOException/RequestException: " + e);
                     retrofitError = retrofit.RetrofitError.unexpectedError(_finalUrl, e);
                 }
                 Throwable handledError = errorHandler.handleError(retrofitError);

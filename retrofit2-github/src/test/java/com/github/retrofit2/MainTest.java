@@ -353,16 +353,16 @@ public class MainTest {
     public void testRequestInterceptorOnMethod() {
     }
     @Test
-    public void testErrorHandler() {
+    public void testErrorHandler() { // SocketTimeoutException
         MockWebServer server = new MockWebServer();
         try {
             server.start();
         } catch (Throwable e) {}
         final AtomicBoolean hasErrorHandled = new AtomicBoolean(false);
+        //MockService service = MockService.create();
         MockService service = MockService.builder()
             .errorHandler(new ErrorHandler() {
                 @Override public Throwable handleError(RetrofitError cause) {
-                    System.out.println("handled!!");
                     hasErrorHandled.set(true);
                     Response r = cause.getResponse();
                     if (r != null && r.getStatus() == 401) {

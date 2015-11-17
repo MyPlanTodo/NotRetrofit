@@ -19,9 +19,14 @@ import retrofit.client.Response;
 
 public class MockErrorHandler implements ErrorHandler {
     @Override public Throwable handleError(RetrofitError cause) {
+        System.out.println("MockErrorHandler: " + cause);
         Response r = cause.getResponse();
-        if (r != null && r.getStatus() == 401) {
-            return new RuntimeException("401", cause);
+        System.out.println("MockErrorHandler: Response: " + r);
+        if (r != null) {
+            System.out.println("MockErrorHandler: status: " + r.getStatus());
+            if (r.getStatus() == 401) {
+                return new RuntimeException("401", cause);
+            }
         }
         return cause;
     }
