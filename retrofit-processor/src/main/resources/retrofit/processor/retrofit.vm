@@ -178,7 +178,9 @@ public final class $subclass$formalTypes extends $origClass$actualTypes {
 
 #if ($okHttpClient != "")
 
-        this.okHttpClient = new $okHttpClient().get();
+        if (this.okHttpClient == null) {
+            this.okHttpClient = new $okHttpClient().get();
+        }
 
 #else
 
