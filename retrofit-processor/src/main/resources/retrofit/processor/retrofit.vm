@@ -505,6 +505,11 @@ public final class $subclass$formalTypes extends $origClass$actualTypes {
 
                 return Observable.create(new OnSubscribeResponse(okHttpClient, request));
             }
+        }).doOnNext(new Action1<com.squareup.okhttp.Response>() {
+            @Override public void call(com.squareup.okhttp.Response response) {
+                retrofit.client.Response retrofitResponse = parseResponse(response);
+                if (!response.isSuccessful()) throw retrofit.RetrofitError.httpError(response.request().urlString(), retrofitResponse, null, null);
+            }
 
     #if (!$retryHeaders.isEmpty())
 
@@ -552,6 +557,8 @@ public final class $subclass$formalTypes extends $origClass$actualTypes {
                 } else if (e instanceof RequestException) {
                     System.out.println("retrofit: OnSubscribeResponse.onError(): is RequestException: " + e);
                     retrofitError = retrofit.RetrofitError.networkError(_finalUrl, (IOException) ((RequestException) e).getCause());
+                } else if (e instanceof retrofit.RetrofitError) {
+                    retrofitError = (retrofit.RetrofitError) e;
                 } else {
                     System.out.println("retrofit: OnSubscribeResponse.onError(): not IOException/RequestException: " + e);
                     retrofitError = retrofit.RetrofitError.unexpectedError(_finalUrl, e);
@@ -647,12 +654,12 @@ public final class $subclass$formalTypes extends $origClass$actualTypes {
                         return Observable.error(retrofitError);
                     }
                     Throwable handledError = errorHandler.handleError(retrofitError);
-                    if (handledError != null) return Observable.just(null); // returns null if blocking
+                    if (handledError != null) return Observable.empty();
                     else return Observable.error(handledError);
                 }
             })
 
-            .subscribeOn(Schedulers.io()).toBlocking().single();
+            .subscribeOn(Schedulers.io()).toBlocking().singleOrDefault(null);
 
         #else
 
@@ -672,7 +679,7 @@ public final class $subclass$formalTypes extends $origClass$actualTypes {
                 }
             })
 
-            .subscribeOn(Schedulers.io()).toBlocking().single();
+            .subscribeOn(Schedulers.io()).toBlocking().singleOrDefault(null);
 
         #end
     #elseif ($p.callback)

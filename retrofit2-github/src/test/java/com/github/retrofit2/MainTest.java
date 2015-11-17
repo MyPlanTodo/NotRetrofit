@@ -44,6 +44,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import com.squareup.okhttp.mockwebserver.MockResponse;
 import com.squareup.okhttp.mockwebserver.MockWebServer;
 import com.squareup.okhttp.HttpUrl;
+import java.net.HttpURLConnection;
 
 public class MainTest {
     @Test
@@ -355,27 +356,72 @@ public class MainTest {
     @Test
     public void testErrorHandler() { // SocketTimeoutException
         MockWebServer server = new MockWebServer();
+        //server.enqueue(new MockResponse().setResponseCode(HttpURLConnection.HTTP_NOT_FOUND));
         try {
             server.start();
-        } catch (Throwable e) {}
+        } catch (Throwable e) {
+            System.out.println("server start() error: " + e);
+        }
         final AtomicBoolean hasErrorHandled = new AtomicBoolean(false);
         //MockService service = MockService.create();
         MockService service = MockService.builder()
             .errorHandler(new ErrorHandler() {
                 @Override public Throwable handleError(RetrofitError cause) {
                     hasErrorHandled.set(true);
+
+                    System.out.println("ErrorHandler: " + cause);
+
                     Response r = cause.getResponse();
-                    if (r != null && r.getStatus() == 401) {
-                        return new RuntimeException("401", cause);
+
+                    System.out.println("ErrorHandler: Response: " + r);
+                    if (r != null) {
+                        System.out.println("ErrorHandler: status: " + r.getStatus());
+                        if (r.getStatus() == 401) {
+                            return new RuntimeException("401", cause);
+                        }
                     }
+
                     return cause;
                 }
             })
         .build();
+        String s = service.get(server.url("/").toString());
+        assertTrue(hasErrorHandled.get());
+    }
+
+    @Test
+    public void testHttpErrorHandler() {
+        MockWebServer server = new MockWebServer();
+        server.enqueue(new MockResponse().setResponseCode(HttpURLConnection.HTTP_NOT_FOUND));
         try {
-            String s = service.get(server.url("/").toString());
+            server.start();
         } catch (Throwable e) {
+            System.out.println("server start() error: " + e);
         }
+        final AtomicBoolean hasErrorHandled = new AtomicBoolean(false);
+        //MockService service = MockService.create();
+        MockService service = MockService.builder()
+            .errorHandler(new ErrorHandler() {
+                @Override public Throwable handleError(RetrofitError cause) {
+                    hasErrorHandled.set(true);
+
+                    System.out.println("ErrorHandler: " + cause);
+
+                    Response r = cause.getResponse();
+
+                    System.out.println("ErrorHandler: Response: " + r);
+                    if (r != null) {
+                        System.out.println("ErrorHandler: status: " + r.getStatus());
+                        if (r.getStatus() == 401) {
+                            return new RuntimeException("401", cause);
+                        }
+                    }
+
+                    return cause;
+                }
+            })
+        .build();
+        String s = service.get(server.url("/").toString());
         assertTrue(hasErrorHandled.get());
     }
 
