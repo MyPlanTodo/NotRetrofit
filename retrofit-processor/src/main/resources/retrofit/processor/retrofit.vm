@@ -158,11 +158,14 @@ public final class $subclass$formalTypes extends $origClass$actualTypes {
 
 #if ($errorHandler != "")
 
-        if (this.errorHandler == null) {
-            this.errorHandler = new $errorHandler();
-        }
+        this.errorHandler = new $errorHandler();
 
 #end
+
+        if (this.errorHandler == null) {
+            this.errorHandler = retrofit.ErrorHandler.DEFAULT;
+        }
+
 
 #if ($authenticator != "")
 
@@ -535,21 +538,20 @@ public final class $subclass$formalTypes extends $origClass$actualTypes {
 
     #end
 
-        #if ($errorHandler != "")
-
         }).onErrorResumeNext(new Func1<Throwable, Observable<com.squareup.okhttp.Response>>() {
             @Override public Observable<com.squareup.okhttp.Response> call(Throwable e) {
+                System.out.println("retrofit: OnSubscribeResponse.onError(): " + e);
+
+                RetrofitError retrofitError = null;
                 if (e instanceof IOException) {
-                    RetrofitError retrofitError = retrofit.RetrofitError.networkError(_finalUrl, (IOException) e);
-                    Throwable handledError = errorHandler.handleError(retrofitError);
-                    if (handledError != null) return Observable.empty();
-                    else return Observable.error(handledError);
+                    retrofitError = retrofit.RetrofitError.networkError(_finalUrl, (IOException) e);
+                } else {
+                    retrofitError = retrofit.RetrofitError.unexpectedError(_finalUrl, e);
                 }
-                return Observable.error(e);
+                Throwable handledError = errorHandler.handleError(retrofitError);
+                if (handledError != null) return Observable.empty();
+                else return Observable.error(handledError);
             }
-
-        #end
-
         })
         .cache();
 
@@ -624,8 +626,6 @@ public final class $subclass$formalTypes extends $origClass$actualTypes {
 
         return retrofitResponseObs
 
-        #if ($errorHandler != "")
-
             .onErrorResumeNext(new Func1<Throwable, Observable<retrofit.client.Response>>() {
                 @Override public Observable<retrofit.client.Response> call(Throwable e) {
                     retrofit.RetrofitError retrofitError = null;
@@ -644,15 +644,11 @@ public final class $subclass$formalTypes extends $origClass$actualTypes {
                 }
             })
 
-        #end
-
             .subscribeOn(Schedulers.io()).toBlocking().single();
 
         #else
 
         return obs
-
-        #if ($errorHandler != "")
 
             .onErrorResumeNext(new Func1<Throwable, Observable<$p.type>>() {
                 @Override public Observable<$p.type> call(Throwable e) {
@@ -668,8 +664,6 @@ public final class $subclass$formalTypes extends $origClass$actualTypes {
                 }
             })
 
-        #end
-
             .subscribeOn(Schedulers.io()).toBlocking().single();
 
         #end
@@ -677,8 +671,6 @@ public final class $subclass$formalTypes extends $origClass$actualTypes {
         #if ($p.responseType) // Callback<Response>
 
         retrofitResponseObs
-
-        #if ($errorHandler != "")
 
             .onErrorResumeNext(new Func1<Throwable, Observable<$p.typeArgs>>() {
                 @Override public Observable<$p.typeArgs> call(Throwable e) {
@@ -693,8 +685,6 @@ public final class $subclass$formalTypes extends $origClass$actualTypes {
                     else return Observable.error(handledError);
                 }
             })
-
-        #end
 
             .subscribeOn(Schedulers.io()).subscribe(new Action1<$p.typeArgs>() {
             @Override public void call($p.typeArgs object) {
@@ -715,8 +705,6 @@ public final class $subclass$formalTypes extends $origClass$actualTypes {
             }
         })
 
-        #if ($errorHandler != "")
-
         .onErrorResumeNext(new Func1<Throwable, Observable<$p.typeArgs>>() {
             @Override public Observable<$p.typeArgs> call(Throwable e) {
                 retrofit.RetrofitError retrofitError = null;
@@ -730,8 +718,6 @@ public final class $subclass$formalTypes extends $origClass$actualTypes {
                 else return Observable.error(handledError);
             }
         })
-
-        #end
 
         .subscribeOn(Schedulers.io()).subscribe(new Action1<$p.typeArgs>() {
             @Override public void call($p.typeArgs object) {
@@ -752,8 +738,6 @@ public final class $subclass$formalTypes extends $origClass$actualTypes {
 
         return obs
 
-        #if ($errorHandler != "")
-
         .onErrorResumeNext(new Func1<Throwable, Observable<$p.typeArgs>>() {
             @Override public Observable<$p.typeArgs> call(Throwable e) {
                 retrofit.RetrofitError retrofitError = null;
@@ -767,8 +751,6 @@ public final class $subclass$formalTypes extends $origClass$actualTypes {
                 else return Observable.error(handledError);
             }
         })
-
-        #end
 
             ;
 

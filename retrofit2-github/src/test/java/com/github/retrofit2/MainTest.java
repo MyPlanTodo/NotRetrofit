@@ -37,6 +37,13 @@ import retrofit.client.Response;
 import retrofit.RetrofitError;
 import java.io.*;
 import java.util.concurrent.CountDownLatch;
+import retrofit.ErrorHandler;
+import retrofit.RetrofitError;
+import retrofit.client.Response;
+import java.util.concurrent.atomic.AtomicBoolean;
+import com.squareup.okhttp.mockwebserver.MockResponse;
+import com.squareup.okhttp.mockwebserver.MockWebServer;
+import com.squareup.okhttp.HttpUrl;
 
 public class MainTest {
     @Test
@@ -347,7 +354,31 @@ public class MainTest {
     }
     @Test
     public void testErrorHandler() {
+        MockWebServer server = new MockWebServer();
+        try {
+            server.start();
+        } catch (Throwable e) {}
+        final AtomicBoolean hasErrorHandled = new AtomicBoolean(false);
+        MockService service = MockService.builder()
+            .errorHandler(new ErrorHandler() {
+                @Override public Throwable handleError(RetrofitError cause) {
+                    System.out.println("handled!!");
+                    hasErrorHandled.set(true);
+                    Response r = cause.getResponse();
+                    if (r != null && r.getStatus() == 401) {
+                        return new RuntimeException("401", cause);
+                    }
+                    return cause;
+                }
+            })
+        .build();
+        try {
+            String s = service.get(server.url("/").toString());
+        } catch (Throwable e) {
+        }
+        assertTrue(hasErrorHandled.get());
     }
+
     @Test
     public void testErrorHandlerOnMethod() {
     }
@@ -357,4 +388,5 @@ public class MainTest {
     @Test
     public void testConverterOnMethod() {
     }
+
 }
