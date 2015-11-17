@@ -14,40 +14,36 @@
 
 package com.github.retrofit2;
 
-import org.junit.Before;
+import com.squareup.okhttp.mockwebserver.MockResponse;
+import com.squareup.okhttp.mockwebserver.MockWebServer;
+
 import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
 
-import org.json.JSONObject;
-import org.json.JSONException;
-
-import static org.mockito.Mockito.verify;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
-import com.github.*;
-
-import rx.Observable;
-import rx.functions.*;
-import java.util.Arrays;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
+import java.net.SocketTimeoutException;
 import java.util.List;
-import retrofit.client.Response;
-import retrofit.RetrofitError;
-import java.io.*;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
+
 import retrofit.ErrorHandler;
 import retrofit.RetrofitError;
 import retrofit.client.Response;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicInteger;
-import com.squareup.okhttp.mockwebserver.MockResponse;
-import com.squareup.okhttp.mockwebserver.MockWebServer;
-import com.squareup.okhttp.HttpUrl;
-import java.net.HttpURLConnection;
+import rx.functions.Func1;
+
+import static junit.framework.Assert.assertNotNull;
+import static junit.framework.Assert.fail;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 public class MainTest {
+    private String responseBody;
+    private Integer responseBode;
+
     @Test
     public void testGetWithBaseUrl() {
         GitHub github = GitHub.create();
@@ -215,15 +211,15 @@ public class MainTest {
             public void success(Response response, Response response2) {
                 StringBuilder sb = new StringBuilder();
                 try {
-                BufferedReader reader = new BufferedReader(new InputStreamReader(response.getBody().in()));
-                String read = null;
+                    BufferedReader reader = new BufferedReader(new InputStreamReader(response.getBody().in()));
+                    String read = null;
 
                     read = reader.readLine();
-                    while (read != null) {
+                    while(read != null) {
                         sb.append(read);
                         read = reader.readLine();
                     }
-                } catch (IOException e) {
+                } catch(IOException e) {
                 }
 
                 String string = sb.toString();
@@ -255,9 +251,10 @@ public class MainTest {
             @Override
             public void success(List<Contributor> list, Response response) {
                 boolean contains = false;
-                for (Contributor c : list) {
+                for(Contributor c : list) {
                     System.out.println(c.login);
-                    if (!c.login.equals("yongjhih")) continue;
+                    if(!c.login.equals("yongjhih"))
+                        continue;
                     contains = true;
                 }
                 assertTrue(contains);
@@ -392,7 +389,7 @@ public class MainTest {
     @Test
     public void testHttpErrorHandler() {
         MockWebServer server = new MockWebServer();
-        server.enqueue(new MockResponse().setResponseCode(HttpURLConnection.HTTP_NOT_FOUND));
+        server.enqueue(new MockResponse().setBody("{ \"error\": \"failure msg\"").setResponseCode(HttpURLConnection.HTTP_NOT_FOUND));
         try {
             server.start();
         } catch (Throwable e) {
@@ -421,6 +418,92 @@ public class MainTest {
         .build();
         String s = service.get(server.url("/").toString());
         assertEquals(status.get(), HttpURLConnection.HTTP_NOT_FOUND);
+    }
+
+    @Test
+    public void testBuilderHttpErrorHandlerReturnsBodyAndErrorCode() throws IOException {
+        MockWebServer server = new MockWebServer();
+        server.enqueue(new MockResponse().setBody("SomeBody").setResponseCode(HttpURLConnection.HTTP_UNAUTHORIZED));
+        server.start();
+
+        MockService service = MockService.builder()
+                .errorHandler(new ErrorHandler() {
+                    @Override public Throwable handleError(RetrofitError cause) {
+
+                        Response r = cause.getResponse();
+                        String bodyString = null;
+                        try {
+                            bodyString = MockErrorHandler.readString(r.getBody().in(), "UTF-8");
+                        } catch(IOException e) {
+                            e.printStackTrace();
+                            fail();
+                        }
+                        assertEquals("Body didn't match when there was an error response", "SomeBody", bodyString);
+                        assertEquals(r.getStatus(), HttpURLConnection.HTTP_UNAUTHORIZED);
+
+                        return cause;
+                    }
+                })
+                .build();
+
+        String s = service.get(server.url("/").toString());
+        assertNotNull(s);
+        assertEquals("Body wasn't as expected: ", s, "SomeBody");
+
+        server.shutdown();
+    }
+
+    @Test
+    public void testCreatorHttpErrorHandlerReturnsBodyAndErrorCode() throws IOException {
+        MockWebServer server = new MockWebServer();
+        server.enqueue(new MockResponse().setBody("SomeBody").setResponseCode(HttpURLConnection.HTTP_UNAUTHORIZED));
+        server.start();
+
+        // init errorhandler static vars
+        MockErrorHandler.errorCode = -1;
+        MockErrorHandler.responseBody = null;
+
+        MockService service = MockService.create();
+        String s = service.get(server.url("/").toString());
+
+        // verify that the errorhandler was called
+        assertEquals("ErrorHandler didn't get error code", MockErrorHandler.errorCode, HttpURLConnection.HTTP_UNAUTHORIZED);
+        assertEquals("Body wasn't received by ErrorHandler", MockErrorHandler.responseBody, "SomeBody");
+
+        assertNotNull(s);
+        assertEquals("Body wasn't as expected: ", s, "SomeBody");
+
+        server.shutdown();
+    }
+
+    @Test
+    public void testHttpErrorHandlerSocketTimeout() throws IOException {
+        MockWebServer server = new MockWebServer();
+        server.enqueue(new MockResponse().setBody("SomeBody").setResponseCode(HttpURLConnection.HTTP_OK).setBodyDelay(60, TimeUnit.SECONDS));
+        server.start();
+
+        final AtomicInteger status = new AtomicInteger(-1);
+        MockService service = MockService.builder()
+                .errorHandler(new ErrorHandler() {
+                    @Override public Throwable handleError(RetrofitError cause) {
+
+                        assertTrue(cause.getCause().getCause() instanceof SocketTimeoutException);
+                        status.set(0);
+
+                        return cause;
+                    }
+                })
+                .build();
+
+        String s = service.get(server.url("/").toString());
+        assertEquals("Error handler wasn't called", status.get(), 0);
+        assertEquals("Body should be null because of timeout", s, null);
+
+        try {
+            server.shutdown();
+        } catch (IOException e) {
+            // ignore...server will be stuck in timeout still
+        }
     }
 
     @Test

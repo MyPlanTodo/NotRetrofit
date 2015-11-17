@@ -13,21 +13,15 @@
  */
 package retrofit.android;
 
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-import java.util.ArrayList;
-import android.content.Context;
-import android.text.TextUtils;
-import android.accounts.AccountManager;
 import android.accounts.Account;
+import android.accounts.AccountManager;
 import android.accounts.AccountManagerFuture;
 import android.app.Activity;
+import android.content.Context;
 import android.os.Bundle;
-import rx.Observable;
-import rx.functions.*;
-import javax.inject.Singleton;
 import android.util.Log;
+
+import javax.inject.Singleton;
 
 @Singleton
 public abstract class AuthenticationInterceptor extends retrofit.http.Retrofit.SimpleRequestInterceptor {

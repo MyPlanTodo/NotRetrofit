@@ -13,21 +13,14 @@
  */
 package com.github.retrofit2;
 
-import retrofit.http.Retrofit.*;
-import retrofit.http.Retrofit;
-
-import rx.Observable;
-import java.io.File;
-
-import retrofit.converter.*;
-import java.util.List;
-import rx.functions.*;
-import retrofit.mime.TypedFile;
-import retrofit.mime.TypedString;
-import com.github.mobile.model.*;
-import retrofit.client.Response;
-import retrofit.Callback;
 import android.app.Activity;
+
+import retrofit.converter.GsonConverter;
+import retrofit.http.Retrofit;
+import retrofit.http.Retrofit.ErrorHandler;
+import retrofit.http.Retrofit.GET;
+import retrofit.http.Retrofit.LogLevel;
+import retrofit.http.Retrofit.Path;
 
 @Retrofit("https://api.github.com")
 @retrofit.http.Retrofit.Headers({ // optional
