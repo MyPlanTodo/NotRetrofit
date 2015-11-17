@@ -42,7 +42,7 @@ import android.app.Activity;
 //@Retrofit.Converter(LoganSquareConverter.class) // default
 @LogLevel(retrofit.RestAdapter.LogLevel.FULL) // optional
 //@RequestInterceptor(MockServiceRequestInterceptor.class) // optional
-//@ErrorHandler(MockErrorHandler.class) // optional
+@ErrorHandler(MockErrorHandler.class) // optional
 // @Retrofit.OkHttpClient(MockServiceOkHttpClienter.class) // optional
 public abstract class MockService {
     @GET("{url}")

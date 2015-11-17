@@ -158,14 +158,15 @@ public final class $subclass$formalTypes extends $origClass$actualTypes {
 
 #if ($errorHandler != "")
 
-        this.errorHandler = new $errorHandler();
+        if (this.errorHandler == null) {
+            this.errorHandler = new $errorHandler();
+        }
 
 #end
 
         if (this.errorHandler == null) {
             this.errorHandler = retrofit.ErrorHandler.DEFAULT;
         }
-
 
 #if ($authenticator != "")
 
