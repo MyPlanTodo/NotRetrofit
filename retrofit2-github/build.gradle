@@ -63,7 +63,7 @@ dependencies {
     testCompile('org.robolectric:robolectric:2.3') {
       exclude group: 'com.android.support'
     }
-    testCompile 'com.squareup.okhttp:mockwebserver:+'
+    testCompile 'com.squareup.okhttp:mockwebserver:2.5.0'
 }
 
 tasks.withType(Test) {
