@@ -219,7 +219,7 @@ public class MainTest {
                         sb.append(read);
                         read = reader.readLine();
                     }
-                } catch(IOException e) {
+                } catch (IOException e) {
                 }
 
                 String string = sb.toString();
@@ -251,7 +251,7 @@ public class MainTest {
             @Override
             public void success(List<Contributor> list, Response response) {
                 boolean contains = false;
-                for(Contributor c : list) {
+                for (Contributor c : list) {
                     System.out.println(c.login);
                     if(!c.login.equals("yongjhih"))
                         continue;
