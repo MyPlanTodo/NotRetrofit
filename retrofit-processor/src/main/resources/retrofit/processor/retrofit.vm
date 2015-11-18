@@ -78,7 +78,7 @@ public final class $subclass$formalTypes extends $origClass$actualTypes {
     retrofit.converter.Converter converter;
     retrofit.RestAdapter.LogLevel logLevel;
     retrofit.RequestInterceptor requestInterceptor = retrofit.RequestInterceptor.NONE;
-    retrofit.ErrorHandler errorHandler = retrofit.ErrorHandler.DEFAULT;
+    retrofit.ErrorHandler errorHandler;
     retrofit.http.Retrofit.RequestAuthenticator requestAuthenticator;
     // FIXME context is tricky
     Object context;
@@ -163,10 +163,6 @@ public final class $subclass$formalTypes extends $origClass$actualTypes {
         }
 
 #end
-
-        if (this.errorHandler == null) {
-            this.errorHandler = retrofit.ErrorHandler.DEFAULT;
-        }
 
 #if ($authenticator != "")
 
@@ -511,8 +507,13 @@ public final class $subclass$formalTypes extends $origClass$actualTypes {
             }
         }).doOnNext(new Action1<com.squareup.okhttp.Response>() {
             @Override public void call(com.squareup.okhttp.Response response) {
+                if (response.isSuccessful()) return;
+
                 retrofit.client.Response retrofitResponse = parseResponse(response);
-                if (!response.isSuccessful()) throw retrofit.RetrofitError.httpError(response.request().urlString(), retrofitResponse, null, null);
+                RetrofitError retrofitError = retrofit.RetrofitError.httpError(response.request().urlString(), retrofitResponse, null, null);
+                if (errorHandler == null) throw new RequestException(response.request(), retrofitError);
+
+                Throwable handledError = errorHandler.handleError(retrofitError);
             }
 
     #if (!$retryHeaders.isEmpty())
@@ -567,9 +568,13 @@ public final class $subclass$formalTypes extends $origClass$actualTypes {
                     System.out.println("retrofit: OnSubscribeResponse.onError(): not IOException/RequestException: " + e);
                     retrofitError = retrofit.RetrofitError.unexpectedError(_finalUrl, e);
                 }
-                Throwable handledError = errorHandler.handleError(retrofitError);
-                if (handledError != null) return Observable.empty();
-                else return Observable.error(handledError);
+                if (errorHandler == null) {
+                    return Observable.error(e);
+                } else {
+                    Throwable handledError = errorHandler.handleError(retrofitError);
+                    if (handledError != null) return Observable.empty(); // return Observable.error(handledError);
+                    else return Observable.empty();
+                }
             }
         })
         .cache();
@@ -592,7 +597,9 @@ public final class $subclass$formalTypes extends $origClass$actualTypes {
         obs = responseCachedObs.map(new Func1<com.squareup.okhttp.Response, String>() {
             @Override public String call(com.squareup.okhttp.Response response) {
                 try {
-                    return response.body().string();
+                    String s = response.body().string();
+                    System.out.println("retrofit: response.body().string(): " + s);
+                    return s;
                 } catch (Exception e) {
                     //throw new RuntimeException(e);
                     throw retrofit.RetrofitError.unexpectedError(_finalUrl, e);
@@ -657,9 +664,13 @@ public final class $subclass$formalTypes extends $origClass$actualTypes {
                     if (retrofitError.getKind() == RetrofitError.Kind.NETWORK) {
                         return Observable.error(retrofitError);
                     }
-                    Throwable handledError = errorHandler.handleError(retrofitError);
-                    if (handledError != null) return Observable.empty();
-                    else return Observable.error(handledError);
+                    if (errorHandler == null) {
+                        return Observable.error(e);
+                    } else {
+                        Throwable handledError = errorHandler.handleError(retrofitError);
+                        if (handledError != null) return Observable.empty(); // return Observable.error(handledError);
+                        else return Observable.empty();
+                    }
                 }
             })
 
@@ -677,9 +688,13 @@ public final class $subclass$formalTypes extends $origClass$actualTypes {
                     } else {
                         retrofitError = retrofit.RetrofitError.unexpectedError(_finalUrl, e);
                     }
-                    Throwable handledError = errorHandler.handleError(retrofitError);
-                    if (handledError != null) return Observable.empty();
-                    else return Observable.error(handledError);
+                    if (errorHandler == null) {
+                        return Observable.error(e);
+                    } else {
+                        Throwable handledError = errorHandler.handleError(retrofitError);
+                        if (handledError != null) return Observable.empty(); // return Observable.error(handledError);
+                        else return Observable.empty();
+                    }
                 }
             })
 
@@ -699,9 +714,13 @@ public final class $subclass$formalTypes extends $origClass$actualTypes {
                     } else {
                         retrofitError = retrofit.RetrofitError.unexpectedError(_finalUrl, e);
                     }
-                    Throwable handledError = errorHandler.handleError(retrofitError);
-                    if (handledError != null) return Observable.empty();
-                    else return Observable.error(handledError);
+                    if (errorHandler == null) {
+                        return Observable.error(e);
+                    } else {
+                        Throwable handledError = errorHandler.handleError(retrofitError);
+                        if (handledError != null) return Observable.empty(); // return Observable.error(handledError);
+                        else return Observable.empty();
+                    }
                 }
             })
 
@@ -732,9 +751,13 @@ public final class $subclass$formalTypes extends $origClass$actualTypes {
                 } else {
                     retrofitError = retrofit.RetrofitError.unexpectedError(_finalUrl, e);
                 }
-                Throwable handledError = errorHandler.handleError(retrofitError);
-                if (handledError != null) return Observable.empty();
-                else return Observable.error(handledError);
+                if (errorHandler == null) {
+                    return Observable.error(e);
+                } else {
+                    Throwable handledError = errorHandler.handleError(retrofitError);
+                    if (handledError != null) return Observable.empty(); // return Observable.error(handledError);
+                    else return Observable.empty();
+                }
             }
         })
 
@@ -765,9 +788,13 @@ public final class $subclass$formalTypes extends $origClass$actualTypes {
                 } else {
                     retrofitError = retrofit.RetrofitError.unexpectedError(_finalUrl, e);
                 }
-                Throwable handledError = errorHandler.handleError(retrofitError);
-                if (handledError != null) return Observable.empty();
-                else return Observable.error(handledError);
+                if (errorHandler == null) {
+                    return Observable.error(e);
+                } else {
+                    Throwable handledError = errorHandler.handleError(retrofitError);
+                    if (handledError != null) return Observable.empty(); // return Observable.error(handledError);
+                    else return Observable.empty();
+                }
             }
         })
 

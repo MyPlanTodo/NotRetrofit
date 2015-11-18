@@ -41,8 +41,6 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 public class MainTest {
-    private String responseBody;
-    private Integer responseBode;
 
     @Test
     public void testGetWithBaseUrl() {
@@ -253,8 +251,7 @@ public class MainTest {
                 boolean contains = false;
                 for (Contributor c : list) {
                     System.out.println(c.login);
-                    if(!c.login.equals("yongjhih"))
-                        continue;
+                    if (!c.login.equals("yongjhih")) continue;
                     contains = true;
                 }
                 assertTrue(contains);
@@ -387,9 +384,9 @@ public class MainTest {
     }
 
     @Test
-    public void testHttpErrorHandler() {
+    public void testHasHttpErrorHandlerResponseCode() {
         MockWebServer server = new MockWebServer();
-        server.enqueue(new MockResponse().setBody("{ \"error\": \"failure msg\"").setResponseCode(HttpURLConnection.HTTP_NOT_FOUND));
+        server.enqueue(new MockResponse().setBody("{ \"error\": \"failure msg\" }").setResponseCode(HttpURLConnection.HTTP_NOT_FOUND));
         try {
             server.start();
         } catch (Throwable e) {
@@ -431,14 +428,6 @@ public class MainTest {
                     @Override public Throwable handleError(RetrofitError cause) {
 
                         Response r = cause.getResponse();
-                        String bodyString = null;
-                        try {
-                            bodyString = MockErrorHandler.readString(r.getBody().in(), "UTF-8");
-                        } catch(IOException e) {
-                            e.printStackTrace();
-                            fail();
-                        }
-                        assertEquals("Body didn't match when there was an error response", "SomeBody", bodyString);
                         assertEquals(r.getStatus(), HttpURLConnection.HTTP_UNAUTHORIZED);
 
                         return cause;
@@ -461,14 +450,13 @@ public class MainTest {
 
         // init errorhandler static vars
         MockErrorHandler.errorCode = -1;
-        MockErrorHandler.responseBody = null;
 
         MockService service = MockService.create();
         String s = service.get(server.url("/").toString());
+        System.out.println("get: " + s);
 
         // verify that the errorhandler was called
         assertEquals("ErrorHandler didn't get error code", MockErrorHandler.errorCode, HttpURLConnection.HTTP_UNAUTHORIZED);
-        assertEquals("Body wasn't received by ErrorHandler", MockErrorHandler.responseBody, "SomeBody");
 
         assertNotNull(s);
         assertEquals("Body wasn't as expected: ", s, "SomeBody");
@@ -482,13 +470,26 @@ public class MainTest {
         server.enqueue(new MockResponse().setBody("SomeBody").setResponseCode(HttpURLConnection.HTTP_OK).setBodyDelay(60, TimeUnit.SECONDS));
         server.start();
 
-        final AtomicInteger status = new AtomicInteger(-1);
+        final AtomicBoolean hasErrorHandled = new AtomicBoolean(false);
         MockService service = MockService.builder()
                 .errorHandler(new ErrorHandler() {
                     @Override public Throwable handleError(RetrofitError cause) {
+                        hasErrorHandled.set(true);
 
-                        assertTrue(cause.getCause().getCause() instanceof SocketTimeoutException);
-                        status.set(0);
+                        // cause: retrofit.RetrofitError: timeout
+                        System.out.println("ErrorHandler: cause: " + cause);
+                        // cause.getCause(): java.net.SocketTimeoutException: timeout
+                        System.out.println("ErrorHandler: cause.getCause(): " + cause.getCause());
+                        // cause.getCause().getCause(): java.net.SocketException: Socket closed
+                        System.out.println("ErrorHandler: cause.getCause().getCause(): " + cause.getCause().getCause());
+                        assertTrue(cause.getCause() instanceof SocketTimeoutException);
+
+                        Response r = cause.getResponse();
+
+                        System.out.println("ErrorHandler: Response: " + r);
+                        if (r != null) {
+                            System.out.println("ErrorHandler: status: " + r.getStatus());
+                        }
 
                         return cause;
                     }
@@ -496,7 +497,9 @@ public class MainTest {
                 .build();
 
         String s = service.get(server.url("/").toString());
-        assertEquals("Error handler wasn't called", status.get(), 0);
+        System.out.println("get: " + s);
+
+        assertTrue("Error handler wasn't called", hasErrorHandled.get());
         assertEquals("Body should be null because of timeout", s, null);
 
         try {
