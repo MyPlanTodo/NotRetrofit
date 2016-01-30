@@ -17,8 +17,8 @@ apply plugin: 'com.android.library'
 apply plugin: 'com.neenbedankt.android-apt'
 
 android {
-    compileSdkVersion 22
-    buildToolsVersion "22.0.1"
+    compileSdkVersion 23
+    buildToolsVersion "23.0.2"
 
     lintOptions {
         abortOnError false
@@ -48,7 +48,7 @@ dependencies {
     compile 'com.bluelinelabs:logansquare:1.1.0'
     //compile 'com.infstory:auto-json:1.0.2'
     //apt 'com.infstory:auto-json-processor:1.0.2'
-    compile 'com.android.support:support-annotations:22.2.0'
+    compile 'com.android.support:support-annotations:23.0.0'
 
     compile 'com.squareup.retrofit:converter-jackson:1.9.0'
     compile 'com.squareup.retrofit:retrofit:1.9.0'
