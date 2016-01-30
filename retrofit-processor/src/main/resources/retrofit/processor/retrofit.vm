@@ -224,8 +224,8 @@ public final class $subclass$formalTypes extends $origClass$actualTypes {
 
 #end
 
-#if ($p.baseUrl != "")
-        baseUrl = "${p.baseUrl}";
+#if ($baseUrl != "")
+        baseUrl = "${baseUrl}";
 #else
         if (baseUrl == null) {
             baseUrl = "${baseUrl}";
