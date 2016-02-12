@@ -557,7 +557,7 @@ public final class $subclass$formalTypes extends $origClass$actualTypes {
                     retrofitError = retrofit.RetrofitError.networkError(_finalUrl, (IOException) e);
                 } else if (e instanceof RequestException) {
                     System.out.println("retrofit: OnSubscribeResponse.onError(): is RequestException: " + e);
-                    retrofitError = retrofit.RetrofitError.networkError(_finalUrl, (IOException) ((RequestException) e).getCause());
+                    retrofitError = retrofit.RetrofitError.networkError(_finalUrl, new IOException(e));
                 } else if (e instanceof retrofit.RetrofitError) {
                     retrofitError = (retrofit.RetrofitError) e;
                 } else {
