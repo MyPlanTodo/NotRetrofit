@@ -28,6 +28,8 @@ import com.github.mobile.model.*;
 import retrofit.client.Response;
 import retrofit.Callback;
 import android.app.Activity;
+import java.util.Map;
+import java.util.HashMap;
 
 @Retrofit("https://api.github.com")
 @retrofit.http.Retrofit.Headers({ // optional
@@ -56,6 +58,23 @@ public abstract class GitHub {
             String owner,
             String repo) {
         return contributorList(owner, repo).flatMap(new Func1<List<Contributor>, Observable<Contributor>>() {
+            @Override public Observable<Contributor> call(List<Contributor> list) {
+                return Observable.from(list);
+            }
+        });
+    }
+
+    @GET("/repos/{owner}/{repo}/contributors")
+    public abstract Observable<List<Contributor>> contributorList(
+        @Path("owner") String owner,
+        @Path("repo") String repo,
+        @QueryMap Map<String, String> options);
+
+    public Observable<Contributor> contributors(
+            String owner,
+            String repo,
+            Map<String, String> options) {
+        return contributorList(owner, repo, options).flatMap(new Func1<List<Contributor>, Observable<Contributor>>() {
             @Override public Observable<Contributor> call(List<Contributor> list) {
                 return Observable.from(list);
             }

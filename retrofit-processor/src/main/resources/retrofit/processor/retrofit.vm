@@ -250,6 +250,14 @@ public final class $subclass$formalTypes extends $origClass$actualTypes {
 
     #end
 
+    #foreach ($query in $p.queryMaps)
+
+        for (Map.Entry<String, String> entry : ${query}.entrySet()) {
+            httpUrlBuilder.addQueryParameter(entry.getKey(), entry.getValue());
+        }
+
+    #end
+
         HttpUrl httpUrl = httpUrlBuilder.build();
 
         Request.Builder requestBuilder = new Request.Builder().url(httpUrl);

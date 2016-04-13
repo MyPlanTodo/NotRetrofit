@@ -40,6 +40,9 @@ import static junit.framework.Assert.fail;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
+import java.util.Map;
+import java.util.HashMap;
+
 public class MainTest {
 
     @Test
@@ -551,6 +554,21 @@ public class MainTest {
     }
     @Test
     public void testConverterOnMethod() {
+    }
+
+    @Test
+    public void testQueryMap() {
+        GitHub github = GitHub.create();
+        Map<String, String> options = new HashMap<>();
+        options.put("access_token", "");
+        List<String> contributorsWithoutAuth = github.contributors("yongjhih", "retrofit", options).map(new Func1<Contributor, String>() {
+            @Override public String call(Contributor contributor) {
+                System.out.println(contributor.login);
+                return contributor.login;
+            }
+        }).toList().toBlocking().single();
+        assertTrue(contributorsWithoutAuth.contains("JakeWharton"));
+        assertTrue(contributorsWithoutAuth.size() > 1);
     }
 
 }
