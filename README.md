@@ -232,7 +232,7 @@ Asynchronous execution requires the last parameter of the method be a `Callback`
 void getUserPhoto(@Path("id") int id, Callback<Photo> cb);
 ```
 
-On Android, callbacks will be executed on the main thread. For desktop applications callbacks will happen on the same thread that executed the HTTP request.
+Callbacks will happen on the same thread that executed the HTTP request.
 
 Retrofit also integrates [RxJava](https://github.com/ReactiveX/RxJava/wiki) to support methods with a return type of `rx.Observable`
 
